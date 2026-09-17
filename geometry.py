@@ -1,0 +1,176 @@
+import numpy as np
+
+
+# 2D geomtries
+
+def generate_square_points(n_per_side=25, size=1.0):
+    scan_points = []
+    scan_normals = []
+
+    for x in np.linspace(-size, size, n_per_side, endpoint=False):
+        scan_points.append([x, -size])
+        scan_normals.append([0, -1])
+
+    for y in np.linspace(-size, size, n_per_side, endpoint=False):
+        scan_points.append([size, y])
+        scan_normals.append([1, 0])
+
+    for x in np.linspace(size, -size, n_per_side, endpoint=False):
+        scan_points.append([x, size])
+        scan_normals.append([0, 1])
+
+    for y in np.linspace(size, -size, n_per_side, endpoint=False):
+        scan_points.append([-size, y])
+        scan_normals.append([-1, 0])
+
+    scan_points = np.array(scan_points, dtype=float)
+    scan_normals = np.array(scan_normals, dtype=float)
+
+    return scan_points, scan_normals
+
+def generate_square_wedge_points( n_per_side=20, n_per_wedge=15, size=1.0, ):
+
+    points = []
+    normals = []
+
+    for x in np.linspace(-size, size, n_per_side, endpoint=False):
+        points.append([x, -size])
+        normals.append([0, -1])
+
+    for y in np.linspace(-size, -0.3 * size, n_per_side, endpoint=False):
+        points.append([size, y])
+        normals.append([1, 0])
+
+    p1 = np.array([size, -0.3 * size])
+    p2 = np.array([0.0, 0.0])
+
+    direction = p2 - p1
+    length = np.linalg.norm(direction)
+
+    normal = np.array([direction[1], -direction[0]]) / length
+
+    for t in np.linspace(0, 1, n_per_wedge, endpoint=False):
+        p = p1 + t * direction
+        points.append(p)
+        normals.append(normal)
+
+    p1 = np.array([0.0, 0.0])
+    p2 = np.array([size, 0.3 * size])
+
+    direction = p2 - p1
+    length = np.linalg.norm(direction)
+
+    normal = np.array([direction[1], -direction[0]]) / length
+
+    for t in np.linspace(0, 1, n_per_wedge, endpoint=False):
+        p = p1 + t * direction
+        points.append(p)
+        normals.append(normal)
+
+    for y in np.linspace(0.3 * size, size, n_per_side, endpoint=False):
+        points.append([size, y])
+        normals.append([1, 0])
+
+    for x in np.linspace(size, -size, n_per_side, endpoint=False):
+        points.append([x, size])
+        normals.append([0, 1])
+
+    for y in np.linspace(size, -size, n_per_side, endpoint=False):
+        points.append([-size, y])
+        normals.append([-1, 0])
+
+    return np.array(points, dtype=float), np.array(normals, dtype=float)
+
+def generate_circle_points(n=25):
+    angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    points = np.column_stack((np.cos(angles), np.sin(angles)))
+    normals = points.copy()
+
+    return points, normals
+
+def generate_circle_wedge_points( n_per_circle=50, n_per_wedge=15, radius=1.0, wedge_angle=np.pi / 3 ):
+
+    points = []
+    normals = []
+
+    half_angle = wedge_angle / 2
+
+    angles = np.linspace(
+        half_angle,
+        2 * np.pi - half_angle,
+        n_per_circle,
+        endpoint=False,
+    )
+
+    for theta in angles:
+
+        p = radius * np.array([
+            np.cos(theta),
+            np.sin(theta),
+        ])
+
+        normal = p / radius
+
+        points.append(p)
+        normals.append(normal)
+
+    theta = half_angle
+
+    p1 = np.array([0.0, 0.0])
+
+    p2 = radius * np.array([
+        np.cos(theta),
+        np.sin(theta),
+    ])
+
+    direction = p2 - p1
+
+    normal = np.array([
+        direction[1],
+        -direction[0],
+    ])
+
+    normal /= np.linalg.norm(normal)
+
+    for t in np.linspace(
+        0,
+        1,
+        n_per_wedge,
+        endpoint=False,
+    ):
+
+        p = p1 + t * direction
+
+        points.append(p)
+        normals.append(normal)
+
+    theta = -half_angle
+
+    p1 = np.array([0.0, 0.0])
+
+    p2 = radius * np.array([
+        np.cos(theta),
+        np.sin(theta),
+    ])
+
+    direction = p2 - p1
+
+    normal = np.array([
+        -direction[1],
+        direction[0],
+    ])
+
+    normal /= np.linalg.norm(normal)
+
+    for t in np.linspace( 0, 1, n_per_wedge, endpoint=False ):
+
+        p = p1 + t * direction
+
+        points.append(p)
+        normals.append(normal)
+
+    return (
+        np.array(points, dtype=float),
+        np.array(normals, dtype=float),
+    )
+
