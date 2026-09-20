@@ -174,3 +174,25 @@ def generate_circle_wedge_points( n_per_circle=50, n_per_wedge=15, radius=1.0, w
         np.array(normals, dtype=float),
     )
 
+
+
+# 3D geometry
+
+def generate_sphere_points(n=100, radius=1.0):
+
+    # Fibonacci sphere
+    indices = np.arange(n)
+
+    phi = np.arccos( 1 - 2 * (indices + 0.5) / n )
+
+    theta = np.pi * (1 + np.sqrt(5)) * indices
+
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+
+    points = radius * np.column_stack((x, y, z))
+
+    normals = points / radius
+
+    return points, normals

@@ -1,24 +1,7 @@
-# import geometry as geo
-
 import numpy as np
-import matplotlib.pyplot as plt
-import math
 
 # from scipy.sparse.linalg import spsolve
 from scipy.interpolate import RegularGridInterpolator
-
-
-def gaussian(r2, sigma):
-    value = np.exp( -r2 / (2 * sigma**2) )
-    return value
-
-def truncated_gaussian(r2, sigma):
-    print()
-
-def wendland_0(r2):
-    r = math.sqrt(r2)
-    value = ( 1 - r )
-    return value
 
 def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, *args):
 
@@ -32,7 +15,7 @@ def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, 
 
             n = scan_normals[j]
 
-            weight = Smoothing_Kernal(r2, **args)
+            weight = Smoothing_Kernal(r2, *args)
 
             V[i] += weight * n
 
@@ -126,66 +109,3 @@ def surface_reconstruction(scan_points, scan_normals, size, nx, ny, Smoothing_Ke
 
 
 
-def display_contour(X, Y, chi_grid, iso_value):
-    plt.figure(figsize=(7, 7))
-
-    plt.contour(
-        X,
-        Y,
-        chi_grid,
-        levels=[iso_value],
-        colors="blue"
-    )
-
-    #plt.scatter(
-    #    scan_points[:, 0],
-    #    scan_points[:, 1],
-    #    color="red",
-    #    s=50,
-    #    zorder=3
-    #)
-
-    #plt.quiver(
-    #    scan_points[:, 0],
-    #    scan_points[:, 1],    
-    #    scan_normals[:, 0],
-    #    scan_normals[:, 1],
-    #    color="black",
-    #    angles="xy",
-    #    scale_units="xy",
-    #    scale=1,
-    #    width=0.005,
-    #    zorder=4
-    #)
-
-    plt.contourf(X, Y, chi_grid, cmap="coolwarm", levels=20)
-    plt.contour(X, Y, chi_grid)
-
-    plt.axis("equal")
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.title("PSR")
-
-    plt.show()
-
-
-def display_reconstruction(X, Y, chi_grid, iso_value, scan_points):
-    fig, ax = plt.subplots(figsize=(7, 7))
-
-    contour = ax.contour(
-        X,
-        Y,
-        chi_grid,
-        levels=[iso_value]
-    )
-
-    ax.scatter(
-        scan_points[:, 0],
-        scan_points[:, 1],
-        color="red",
-        s=1,
-        zorder=1
-    )
-
-    ax.axis("equal")
-    plt.show()
