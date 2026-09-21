@@ -3,7 +3,7 @@ import numpy as np
 # from scipy.sparse.linalg import spsolve
 from scipy.interpolate import RegularGridInterpolator
 
-def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, *args):
+def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **kwargs):
 
     V = np.zeros((len(grid_points), 2))
 
@@ -15,7 +15,7 @@ def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, 
 
             n = scan_normals[j]
 
-            weight = Smoothing_Kernal(r2, *args)
+            weight = Smoothing_Kernal(r2, **kwargs)
 
             V[i] += weight * n
 
@@ -75,7 +75,7 @@ def poisson_solver(divergence, nx, ny, dx, dy):
 
     return chi_grid.ravel()
 
-def surface_reconstruction(scan_points, scan_normals, size, nx, ny, Smoothing_Kernal, *args):
+def surface_reconstruction(scan_points, scan_normals, size, nx, ny, Smoothing_Kernal, **kwargs):
     
     x = np.linspace(-size, size, nx)
     y = np.linspace(-size, size, ny)
@@ -87,7 +87,7 @@ def surface_reconstruction(scan_points, scan_normals, size, nx, ny, Smoothing_Ke
 
     grid_points = np.column_stack( (X.ravel(), Y.ravel()) )
 
-    grid_vectors = vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, *args)
+    grid_vectors = vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **kwargs)
 
     divergence = calculate_divergence(grid_vectors, nx, ny, dx, dy)
 

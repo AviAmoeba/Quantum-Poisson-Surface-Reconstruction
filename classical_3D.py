@@ -3,19 +3,19 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 
-def vector_field_tree( scan_points, scan_normals, grid_points, Smoothing_Kernal, **args ):
+def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **kwargs):
 
     V = np.zeros((len(grid_points), 3))
 
     for i, x in enumerate(grid_points):
-
+        
         for j, p in enumerate(scan_points):
 
             r2 = np.sum((x - p) ** 2)
 
             n = scan_normals[j]
 
-            weight = Smoothing_Kernal(r2, **args)
+            weight = Smoothing_Kernal(r2, **kwargs)
 
             V[i] += weight * n
 
@@ -40,7 +40,7 @@ def calculate_gradient_3d(Vx, Vy, Vz, dx, dy, dz):
     return dVx_dx, dVy_dy, dVz_dz
 
 
-def calculate_divergence( grid_vectors, nx, ny, nz, dx, dy, dz ):
+def calculate_divergence(grid_vectors, nx, ny, nz, dx, dy, dz):
 
     Vx = grid_vectors[:, 0].reshape(nx, ny, nz)
     Vy = grid_vectors[:, 1].reshape(nx, ny, nz)
@@ -55,7 +55,7 @@ def calculate_divergence( grid_vectors, nx, ny, nz, dx, dy, dz ):
     return divergence.ravel()
 
 
-def poisson_solver_3d( divergence, nx, ny, nz, dx, dy, dz ):
+def poisson_solver_3d(divergence, nx, ny, nz, dx, dy, dz):
 
     divergence_grid = divergence.reshape(nx, ny, nz)
 
