@@ -44,22 +44,11 @@ ny = int(np.log2(Ny))
 
 
 n_position_qubits = nx + ny
-
 n_qubits = n_position_qubits + 1
-
 ancilla = n_position_qubits
 
 x_qubits = list(range(nx))
-
 y_qubits = list(range(nx, nx + ny))
-
-
-print("\nNumber of x qubits:", nx)
-print("Number of y qubits:", ny)
-print("Position qubits:", n_position_qubits)
-print("Total qubits:", n_qubits)
-print("Ancilla:", ancilla)
-
 
 qc = QuantumCircuit(n_qubits)
 
@@ -76,7 +65,6 @@ qc.append(qft_y, y_qubits)
 qc.barrier()
 
 
-
 lambdas = np.zeros((Nx, Ny))
 
 for kx in range(Nx):
@@ -88,32 +76,11 @@ for kx in range(Nx):
 
         lambdas[kx, ky] = (lambda_x + lambda_y)
 
-
-print("\n2D Laplacian eigenvalues:")
-print(lambdas)
-
-
-
 nonzero_eigenvalues = lambdas[ lambdas > 1e-12 ]
-
-
-if len(nonzero_eigenvalues) == 0:
-    raise ValueError(
-        "All Laplacian eigenvalues are zero."
-    )
-
 
 lambda_min = np.min(nonzero_eigenvalues)
 
-print(
-    "\nSmallest non-zero eigenvalue:",
-    lambda_min
-)
-
 C = lambda_min
-
-
-
 
 for kx in range(Nx):
 
@@ -133,11 +100,9 @@ for kx in range(Nx):
         bits = []
 
         for bit in range(nx):
-
             bits.append((kx >> bit) & 1)
 
         for bit in range(ny):
-
             bits.append((ky >> bit) & 1)
 
 
@@ -147,16 +112,8 @@ for kx in range(Nx):
                 qc.x(q)
 
 
-        # ----------------------------------------------------
-        # Multi-controlled Ry
-        # ----------------------------------------------------
-
         qc.mcry(-theta, x_qubits + y_qubits, ancilla, mode="noancilla")
 
-
-        # ----------------------------------------------------
-        # Undo the X gates
-        # ----------------------------------------------------
 
         for q, bit in zip(x_qubits + y_qubits, bits):
 
@@ -178,7 +135,6 @@ qc.barrier()
 
 # print("\nQuantum circuit:")
 # print( qc.draw() )
-
 
 
 # qc.draw("mpl")
@@ -250,7 +206,6 @@ plt.ylabel("y")
 plt.title("PSR")
 
 plt.show()
-
 
 
 fig, ax = plt.subplots(figsize=(7, 7))

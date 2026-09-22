@@ -82,7 +82,7 @@ def poisson_solver_3d(divergence, nx, ny, nz, dx, dy, dz):
     return chi_grid.ravel()
 
 
-def surface_reconstruction_3d(scan_points, scan_normals, size, nx, ny, nz, Smoothing_Kernal, **args):
+def surface_reconstruction_3d(scan_points, scan_normals, size, nx, ny, nz, Smoothing_Kernal, **kwargs):
 
     x = np.linspace(-size, size, nx)
     y = np.linspace(-size, size, ny)
@@ -96,7 +96,7 @@ def surface_reconstruction_3d(scan_points, scan_normals, size, nx, ny, nz, Smoot
 
     grid_points = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
 
-    grid_vectors = vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **args)
+    grid_vectors = vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **kwargs)
 
     divergence = calculate_divergence(grid_vectors, nx, ny, nz, dx, dy, dz)
 
@@ -122,13 +122,13 @@ def gaussian(r2, sigma):
 
 import geometry as geo
 
-scan_points, scan_normals = geo.generate_sphere_points()
+scan_points, scan_normals = geo.generate_cube_points()
 
 size = 2
 
-nx = 8
-ny = 8
-nz = 8
+nx = 16
+ny = 16
+nz = 16
 
 chi_grid, iso_value = surface_reconstruction_3d(scan_points, scan_normals, size, nx, ny, nz, gaussian, sigma=0.2)
 
@@ -137,33 +137,43 @@ chi_grid, iso_value = surface_reconstruction_3d(scan_points, scan_normals, size,
 
 
 
-
-
-
 import numpy as np
 import matplotlib.pyplot as plt
+from skimage.measure import marching_cubes
 
 x = np.linspace(-size, size, nx)
 y = np.linspace(-size, size, ny)
 z = np.linspace(-size, size, nz)
 
-X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
+# Extract the isosurface
+verts, faces, normals, values = marching_cubes(
+    chi_grid,
+    level=iso_value,
+    spacing=(x[1] - x[0],
+             y[1] - y[0],
+             z[1] - z[0])
+)
 
-tolerance = 0.02
+# marching_cubes coordinates start at (0, 0, 0),
+# so shift them to your actual grid coordinates
+verts[:, 0] += x[0]
+verts[:, 1] += y[0]
+verts[:, 2] += z[0]
 
-mask = np.abs(chi_grid - iso_value) < tolerance
-
+# Plot mesh
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_subplot(111, projection="3d")
 
-ax.scatter(
-    X[mask],
-    Y[mask],
-    Z[mask],
-    s=5,
-    alpha=0.5
+ax.plot_trisurf(
+    verts[:, 0],
+    verts[:, 1],
+    faces,
+    verts[:, 2],
+    alpha=0.7,
+    edgecolor="none"
 )
 
+# Optional: show the original scan points
 ax.scatter(
     scan_points[:, 0],
     scan_points[:, 1],
@@ -181,7 +191,5 @@ ax.set_ylim(-size, size)
 ax.set_zlim(-size, size)
 
 ax.set_box_aspect((1, 1, 1))
-
-print("show")
 
 plt.show()

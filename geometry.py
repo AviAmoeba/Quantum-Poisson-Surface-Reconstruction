@@ -196,3 +196,45 @@ def generate_sphere_points(n=100, radius=1.0):
     normals = points / radius
 
     return points, normals
+
+
+def generate_cube_points(n_per_side=25, size=1.0):
+    points = []
+    normals = []
+
+    values = np.linspace(-size, size, n_per_side, endpoint=False)
+
+    for y in values:
+        for z in values:
+            points.append([-size, y, z])
+            normals.append([-1, 0, 0])
+
+    for y in values:
+        for z in values:
+            points.append([size, y, z])
+            normals.append([1, 0, 0])
+
+    for x in values:
+        for z in values:
+            points.append([x, -size, z])
+            normals.append([0, -1, 0])
+
+    for x in values:
+        for z in values:
+            points.append([x, size, z])
+            normals.append([0, 1, 0])
+
+    for x in values:
+        for y in values:
+            points.append([x, y, -size])
+            normals.append([0, 0, -1])
+
+    for x in values:
+        for y in values:
+            points.append([x, y, size])
+            normals.append([0, 0, 1])
+
+    return (
+        np.array(points, dtype=float),
+        np.array(normals, dtype=float),
+    )
