@@ -2,7 +2,6 @@
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
-
 def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **kwargs):
 
     V = np.zeros((len(grid_points), 3))
@@ -21,7 +20,6 @@ def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, 
 
     return V
 
-
 def calculate_gradient_3d(Vx, Vy, Vz, dx, dy, dz):
 
     dVx_dx = np.zeros_like(Vx)
@@ -39,7 +37,6 @@ def calculate_gradient_3d(Vx, Vy, Vz, dx, dy, dz):
 
     return dVx_dx, dVy_dy, dVz_dz
 
-
 def calculate_divergence(grid_vectors, nx, ny, nz, dx, dy, dz):
 
     Vx = grid_vectors[:, 0].reshape(nx, ny, nz)
@@ -53,7 +50,6 @@ def calculate_divergence(grid_vectors, nx, ny, nz, dx, dy, dz):
     divergence = dVx_dx + dVy_dy + dVz_dz
 
     return divergence.ravel()
-
 
 def poisson_solver_3d(divergence, nx, ny, nz, dx, dy, dz):
 
@@ -80,7 +76,6 @@ def poisson_solver_3d(divergence, nx, ny, nz, dx, dy, dz):
     chi_grid = np.real(np.fft.ifftn(chi_hat))
 
     return chi_grid.ravel()
-
 
 def surface_reconstruction_3d(scan_points, scan_normals, size, nx, ny, nz, Smoothing_Kernal, **kwargs):
 
@@ -120,9 +115,9 @@ def gaussian(r2, sigma):
     return value
 
 
-import geometry as geo
+import funcs.geometry as geo
 
-scan_points, scan_normals = geo.generate_cube_points()
+scan_points, scan_normals = geo.generate_sphere_points()
 
 size = 2
 
@@ -135,9 +130,6 @@ chi_grid, iso_value = surface_reconstruction_3d(scan_points, scan_normals, size,
 
 
 
-
-
-import numpy as np
 import matplotlib.pyplot as plt
 from skimage.measure import marching_cubes
 
@@ -173,7 +165,6 @@ ax.plot_trisurf(
     edgecolor="none"
 )
 
-# Optional: show the original scan points
 ax.scatter(
     scan_points[:, 0],
     scan_points[:, 1],
@@ -193,3 +184,4 @@ ax.set_zlim(-size, size)
 ax.set_box_aspect((1, 1, 1))
 
 plt.show()
+

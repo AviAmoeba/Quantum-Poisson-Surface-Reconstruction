@@ -1,6 +1,4 @@
 import numpy as np
-
-# from scipy.sparse.linalg import spsolve
 from scipy.interpolate import RegularGridInterpolator
 
 def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **kwargs):
@@ -21,18 +19,14 @@ def vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, 
 
     return V
 
-# First Order Finite difference
 def calculate_gradient(Vx, Vy, dx, dy):
 
-    # First-order finite difference
     dVx_dx = np.zeros_like(Vx)
     dVy_dy = np.zeros_like(Vy)
 
-    # dVx/dx
     dVx_dx[:-1, :] = (Vx[1:, :] - Vx[:-1, :]) / dx
     dVx_dx[-1, :] = (Vx[-1, :] - Vx[-2, :]) / dx
 
-    # dVy/dy
     dVy_dy[:, :-1] = (Vy[:, 1:] - Vy[:, :-1]) / dy
     dVy_dy[:, -1] = (Vy[:, -1] - Vy[:, -2]) / dy
 
@@ -102,10 +96,5 @@ def surface_reconstruction(scan_points, scan_normals, size, nx, ny, Smoothing_Ke
     iso_value = np.mean(chi_samples)
 
     return chi_grid, iso_value
-
-
-
-
-
 
 

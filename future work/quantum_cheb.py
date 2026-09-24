@@ -10,7 +10,7 @@ from qiskit.circuit.library.arithmetic.piecewise_chebyshev import PiecewiseCheby
 
 
 import classical_main as main
-import geometry as geo
+import funcs.geometry as geo
 
 def gaussian(r2, sigma):
     value = np.exp( -r2 / (2 * sigma**2) )
@@ -96,33 +96,12 @@ for kx in range(Nx):
 
 lambdas[0, 0] = 0.0
 
-
-
-
 nonzero_eigenvalues = lambdas[lambdas > 1.0e-12]
-if len(nonzero_eigenvalues) == 0:
-    raise ValueError(
-        "All Laplacian eigenvalues are zero."
-    )
-
 
 lambda_min = np.min(nonzero_eigenvalues)
 lambda_max = np.max(nonzero_eigenvalues)
 
-
-# Scaling factor
-#
-# We want:
-#
-#       C/lambda <= 1
-#
-# Choosing C=lambda_min gives
-#
-#       C/lambda_min = 1
-#
-
 C = lambda_min
-
 
 def theta_exact_from_index(index):
     index = np.asarray(index)
@@ -162,11 +141,6 @@ breakpoints = sorted(
         if 0 <= b <= N_position
     )
 )
-
-if len(breakpoints) < 2:
-    raise ValueError(
-        "Not enough breakpoints."
-    )
 
 degree = 6
 

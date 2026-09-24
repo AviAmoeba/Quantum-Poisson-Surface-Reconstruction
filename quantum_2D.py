@@ -1,11 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scipy.interpolate import RegularGridInterpolator
+
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import QFT
+from qiskit.quantum_info import Statevector
 
 import classical_main as main
-import geometry as geo
+import funcs.geometry as geo
 
 def gaussian(r2, sigma):
     value = np.exp( -r2 / (2 * sigma**2) )
@@ -131,16 +134,8 @@ qc.append(iqft_y, y_qubits)
 
 qc.barrier()
 
-
-
-# print("\nQuantum circuit:")
-# print( qc.draw() )
-
-
 # qc.draw("mpl")
 # plt.show()
-
-from qiskit.quantum_info import Statevector
 
 state = Statevector.from_instruction(qc)
 
@@ -154,16 +149,11 @@ solution_amplitudes = np.array([
 
 chi_grid = solution_amplitudes.reshape(Nx, Ny)
 
-# chi_grid = chi.reshape(nx, ny)
-
-from scipy.interpolate import RegularGridInterpolator
-
 interpolator = RegularGridInterpolator((x, y), chi_grid)
 
 chi_samples = interpolator(scan_points)
 
 iso_value = np.mean(chi_samples)
-
 
 
 plt.figure(figsize=(7, 7))
@@ -176,37 +166,15 @@ plt.contour(
     colors="blue"
 )
 
-#plt.scatter(
-#    scan_points[:, 0],
-#    scan_points[:, 1],
-#    color="red",
-#    s=50,
-#    zorder=3
-#)
-
-#plt.quiver(
-#    scan_points[:, 0],
-#    scan_points[:, 1],    
-#    scan_normals[:, 0],
-#    scan_normals[:, 1],
-#    color="black",
-#    angles="xy",
-#    scale_units="xy",
-#    scale=1,
-#    width=0.005,
-#    zorder=4
-#)
-
 plt.contourf(X, Y, chi_grid, cmap="coolwarm", levels=20)
 plt.contour(X, Y, chi_grid)
 
 plt.axis("equal")
 plt.xlabel("x")
 plt.ylabel("y")
-plt.title("PSR")
+plt.title("Heatmap of the Indicator Function")
 
 plt.show()
-
 
 fig, ax = plt.subplots(figsize=(7, 7))
 
@@ -225,5 +193,10 @@ ax.scatter(
     zorder=1
 )
 
-ax.axis("equal")
+plt.axis("equal")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Reconstruced Surface")
+
 plt.show()
+
