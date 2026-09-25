@@ -121,11 +121,11 @@ scan_points, scan_normals = geo.generate_sphere_points()
 
 size = 2
 
-nx = 16
-ny = 16
-nz = 16
+Nx = 16
+Ny = 16
+Nz = 16
 
-chi_grid, iso_value = surface_reconstruction_3d(scan_points, scan_normals, size, nx, ny, nz, gaussian, sigma=0.2)
+chi_grid, iso_value = surface_reconstruction_3d(scan_points, scan_normals, size, Nx, Ny, Nz, gaussian, sigma=0.2)
 
 
 
@@ -133,11 +133,10 @@ chi_grid, iso_value = surface_reconstruction_3d(scan_points, scan_normals, size,
 import matplotlib.pyplot as plt
 from skimage.measure import marching_cubes
 
-x = np.linspace(-size, size, nx)
-y = np.linspace(-size, size, ny)
-z = np.linspace(-size, size, nz)
+x = np.linspace(-size, size, Nx)
+y = np.linspace(-size, size, Ny)
+z = np.linspace(-size, size, Nz)
 
-# Extract the isosurface
 verts, faces, normals, values = marching_cubes(
     chi_grid,
     level=iso_value,
@@ -146,13 +145,10 @@ verts, faces, normals, values = marching_cubes(
              z[1] - z[0])
 )
 
-# marching_cubes coordinates start at (0, 0, 0),
-# so shift them to your actual grid coordinates
 verts[:, 0] += x[0]
 verts[:, 1] += y[0]
 verts[:, 2] += z[0]
 
-# Plot mesh
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_subplot(111, projection="3d")
 

@@ -4,29 +4,30 @@ import numpy as np
 # 2D geomtries
 
 def generate_square_points(n_per_side=25, size=1.0):
-    scan_points = []
-    scan_normals = []
+
+    points = []
+    normals = []
 
     for x in np.linspace(-size, size, n_per_side, endpoint=False):
-        scan_points.append([x, -size])
-        scan_normals.append([0, -1])
+        points.append([x, -size])
+        normals.append([0, -1])
 
     for y in np.linspace(-size, size, n_per_side, endpoint=False):
-        scan_points.append([size, y])
-        scan_normals.append([1, 0])
+        points.append([size, y])
+        normals.append([1, 0])
 
     for x in np.linspace(size, -size, n_per_side, endpoint=False):
-        scan_points.append([x, size])
-        scan_normals.append([0, 1])
+        points.append([x, size])
+        normals.append([0, 1])
 
     for y in np.linspace(size, -size, n_per_side, endpoint=False):
-        scan_points.append([-size, y])
-        scan_normals.append([-1, 0])
+        points.append([-size, y])
+        normals.append([-1, 0])
 
-    scan_points = np.array(scan_points, dtype=float)
-    scan_normals = np.array(scan_normals, dtype=float)
+    points = np.array(points, dtype=float)
+    normals = np.array(normals, dtype=float)
 
-    return scan_points, scan_normals
+    return points, normals
 
 def generate_square_wedge_points( n_per_side=20, n_per_wedge=15, size=1.0, ):
 
@@ -79,9 +80,13 @@ def generate_square_wedge_points( n_per_side=20, n_per_wedge=15, size=1.0, ):
         points.append([-size, y])
         normals.append([-1, 0])
 
-    return np.array(points, dtype=float), np.array(normals, dtype=float)
+    points = np.array(points, dtype=float)
+    normals = np.array(normals, dtype=float)
+
+    return points, normals
 
 def generate_circle_points(n=25):
+
     angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
     points = np.column_stack((np.cos(angles), np.sin(angles)))
     normals = points.copy()
@@ -168,11 +173,58 @@ def generate_circle_wedge_points( n_per_circle=50, n_per_wedge=15, radius=1.0, w
 
         points.append(p)
         normals.append(normal)
+    
+    points = np.array(points, dtype=float)
+    normals = np.array(normals, dtype=float)
 
-    return (
-        np.array(points, dtype=float),
-        np.array(normals, dtype=float),
-    )
+    return points, normals
+
+
+
+def generate_pentagon_points(n_per_side=25, size=1.0):
+
+    points = []
+    normals = []
+
+    angles = np.linspace(
+        np.pi / 2,
+        np.pi / 2 + 2 * np.pi,
+        6,
+    )[:-1]
+
+    vertices = size * np.column_stack((
+        np.cos(angles),
+        np.sin(angles),
+    ))
+
+    for i in range(5):
+        p1 = vertices[i]
+        p2 = vertices[(i + 1) % 5]
+
+        direction = p2 - p1
+
+        normal = np.array([
+            direction[1],
+            -direction[0],
+        ])
+
+        normal /= np.linalg.norm(normal)
+
+        for t in np.linspace(
+            0,
+            1,
+            n_per_side,
+            endpoint=False,
+        ):
+            p = p1 + t * direction
+
+            points.append(p)
+            normals.append(normal)
+
+    points = np.array(points, dtype=float)
+    normals = np.array(normals, dtype=float)
+
+    return points, normals
 
 
 
@@ -199,6 +251,7 @@ def generate_sphere_points(n=100, radius=1.0):
 
 
 def generate_cube_points(n_per_side=25, size=1.0):
+    
     points = []
     normals = []
 
@@ -234,7 +287,8 @@ def generate_cube_points(n_per_side=25, size=1.0):
             points.append([x, y, size])
             normals.append([0, 0, 1])
 
-    return (
-        np.array(points, dtype=float),
-        np.array(normals, dtype=float),
-    )
+    points = np.array(points, dtype=float)
+    normals = np.array(normals, dtype=float)
+
+    return points, normals
+
