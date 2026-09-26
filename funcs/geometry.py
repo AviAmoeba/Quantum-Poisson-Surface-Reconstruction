@@ -3,24 +3,26 @@ import numpy as np
 
 # 2D geomtries
 
-def generate_square_points(n_per_side=25, size=1.0):
+def generate_square_points(n_per_side=25, size=1):
 
     points = []
     normals = []
 
-    for x in np.linspace(-size, size, n_per_side, endpoint=False):
+    values = np.linspace(-size, size, n_per_side, endpoint=False)
+
+    for x in values:
         points.append([x, -size])
         normals.append([0, -1])
 
-    for y in np.linspace(-size, size, n_per_side, endpoint=False):
+    for y in values:
         points.append([size, y])
         normals.append([1, 0])
 
-    for x in np.linspace(size, -size, n_per_side, endpoint=False):
+    for x in values:
         points.append([x, size])
         normals.append([0, 1])
 
-    for y in np.linspace(size, -size, n_per_side, endpoint=False):
+    for y in values:
         points.append([-size, y])
         normals.append([-1, 0])
 
@@ -29,7 +31,8 @@ def generate_square_points(n_per_side=25, size=1.0):
 
     return points, normals
 
-def generate_square_wedge_points( n_per_side=20, n_per_wedge=15, size=1.0, ):
+
+def generate_square_wedge_points(n_per_side=20, n_per_wedge=15, size=1):
 
     points = []
     normals = []
@@ -85,34 +88,28 @@ def generate_square_wedge_points( n_per_side=20, n_per_wedge=15, size=1.0, ):
 
     return points, normals
 
-def generate_circle_points(n=25):
 
-    angles = np.linspace(0, 2 * np.pi, n, endpoint=False)
+def generate_circle_points(radius=100):
+
+    angles = np.linspace(0, 2 * np.pi, radius, endpoint=False)
     points = np.column_stack((np.cos(angles), np.sin(angles)))
     normals = points.copy()
 
     return points, normals
 
-def generate_circle_wedge_points( n_per_circle=50, n_per_wedge=15, radius=1.0, wedge_angle=np.pi / 3 ):
+
+def generate_circle_wedge_points(n_per_circle=50, n_per_wedge=15, radius=1.0, wedge_angle=np.pi / 3):
 
     points = []
     normals = []
 
     half_angle = wedge_angle / 2
 
-    angles = np.linspace(
-        half_angle,
-        2 * np.pi - half_angle,
-        n_per_circle,
-        endpoint=False,
-    )
+    alpha = 2 * np.pi - half_angle
 
-    for theta in angles:
+    for theta in np.linspace(half_angle, alpha, n_per_circle, endpoint=False):
 
-        p = radius * np.array([
-            np.cos(theta),
-            np.sin(theta),
-        ])
+        p = radius * np.array([np.cos(theta), np.sin(theta)])
 
         normal = p / radius
 
@@ -123,26 +120,15 @@ def generate_circle_wedge_points( n_per_circle=50, n_per_wedge=15, radius=1.0, w
 
     p1 = np.array([0.0, 0.0])
 
-    p2 = radius * np.array([
-        np.cos(theta),
-        np.sin(theta),
-    ])
+    p2 = radius * np.array([np.cos(theta), np.sin(theta)])
 
     direction = p2 - p1
 
-    normal = np.array([
-        direction[1],
-        -direction[0],
-    ])
+    normal = np.array([direction[1], -direction[0]])
 
     normal /= np.linalg.norm(normal)
 
-    for t in np.linspace(
-        0,
-        1,
-        n_per_wedge,
-        endpoint=False,
-    ):
+    for t in np.linspace(0, 1, n_per_wedge, endpoint=False):
 
         p = p1 + t * direction
 
@@ -153,17 +139,11 @@ def generate_circle_wedge_points( n_per_circle=50, n_per_wedge=15, radius=1.0, w
 
     p1 = np.array([0.0, 0.0])
 
-    p2 = radius * np.array([
-        np.cos(theta),
-        np.sin(theta),
-    ])
+    p2 = radius * np.array([np.cos(theta), np.sin(theta)])
 
     direction = p2 - p1
 
-    normal = np.array([
-        -direction[1],
-        direction[0],
-    ])
+    normal = np.array([-direction[1], direction[0]])
 
     normal /= np.linalg.norm(normal)
 
@@ -180,22 +160,14 @@ def generate_circle_wedge_points( n_per_circle=50, n_per_wedge=15, radius=1.0, w
     return points, normals
 
 
-
-def generate_pentagon_points(n_per_side=25, size=1.0):
+def generate_pentagon_points(n_per_side=20, size=1.0):
 
     points = []
     normals = []
 
-    angles = np.linspace(
-        np.pi / 2,
-        np.pi / 2 + 2 * np.pi,
-        6,
-    )[:-1]
+    angles = np.linspace(np.pi / 2, np.pi / 2 + 2 * np.pi, 6)[:-1]
 
-    vertices = size * np.column_stack((
-        np.cos(angles),
-        np.sin(angles),
-    ))
+    vertices = size * np.column_stack((np.cos(angles), np.sin(angles)))
 
     for i in range(5):
         p1 = vertices[i]
@@ -203,19 +175,12 @@ def generate_pentagon_points(n_per_side=25, size=1.0):
 
         direction = p2 - p1
 
-        normal = np.array([
-            direction[1],
-            -direction[0],
-        ])
+        normal = np.array([direction[1], -direction[0]])
 
         normal /= np.linalg.norm(normal)
 
-        for t in np.linspace(
-            0,
-            1,
-            n_per_side,
-            endpoint=False,
-        ):
+        for t in np.linspace(0, 1, n_per_side, endpoint=False):
+
             p = p1 + t * direction
 
             points.append(p)

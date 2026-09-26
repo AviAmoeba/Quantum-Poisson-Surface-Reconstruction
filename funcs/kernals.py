@@ -12,3 +12,6 @@ def wendland_0(r2):
     r = math.sqrt(r2)
     value = ( 1 - r )
     return value
+
+def wendland_1(r2):
+    print()

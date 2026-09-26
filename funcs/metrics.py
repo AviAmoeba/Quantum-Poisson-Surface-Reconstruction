@@ -37,6 +37,7 @@ def chamfer_kdtree(points_a, points_b):
 
 
 from shapely.geometry import Point, Polygon
+from shapely.geometry import box
 from shapely.ops import unary_union
 from skimage.measure import find_contours
 
@@ -44,7 +45,6 @@ from skimage.measure import find_contours
 def iso_contour_to_polygons(chi_grid, iso_value, x, y):
 
     contours = find_contours(chi_grid, level=iso_value)
-
     polygons = []
 
     for contour in contours:
@@ -62,7 +62,7 @@ def iso_contour_to_polygons(chi_grid, iso_value, x, y):
     return polygons
 
 
-def circle_vs_isosurface_iou(chi_grid, iso_value, x, y, circle_radius=1, circle_resolution=256):
+def circle_vs_isosurface_iou(chi_grid, iso_value, x, y, circle_radius=1, circle_resolution=512):
 
     circle = Point(0, 0).buffer(circle_radius, resolution=circle_resolution)
 
@@ -73,6 +73,28 @@ def circle_vs_isosurface_iou(chi_grid, iso_value, x, y, circle_radius=1, circle_
     intersection_area = circle.intersection(iso_shape).area
     union_area = circle.union(iso_shape).area
 
+    if union_area == 0:
+        return 0.0
+
     return intersection_area / union_area
 
 
+def square_vs_isosurface_iou(chi_grid, iso_value, x, y, square_size=1):
+
+    square = box(-square_size, -square_size, square_size, square_size)
+
+    polygons = iso_contour_to_polygons(chi_grid, iso_value, x, y)
+
+    iso_shape = unary_union(polygons)
+
+    intersection_area = square.intersection(iso_shape).area
+    union_area = square.union(iso_shape).area
+
+    if union_area == 0:
+        return 0.0
+
+    return intersection_area / union_area
+
+
+def pentagon():
+    print()

@@ -1,227 +1,199 @@
-
-
 import numpy as np
-import matplotlib.pyplot as plt
+from scipy.interpolate import RegularGridInterpolator
 
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import QFT
 from qiskit.quantum_info import Statevector
 
-from scipy.interpolate import RegularGridInterpolator
-
 import classical_3D as main
-import funcs.geometry as geo
 
+class QuantumFunction:
 
-def gaussian(r2, sigma):
-    value = np.exp( -r2 / (2 * sigma**2) )
-    return value
+    def __init__(self, Nx, Ny, Nz, dx, dy, dz, x_qubits, y_qubits, z_qubits, ancilla):
+        self.Nx = Nx
+        self.Ny = Ny
+        self.Nz = Nz
 
+        self.dx = dx
+        self.dy = dy
+        self.dz = dz
 
-scan_points, scan_normals = geo.generate_sphere_points()
+        self.x_qubits = x_qubits
+        self.y_qubits = y_qubits
+        self.z_qubits = z_qubits
 
-size = 2
+        self.ancilla = ancilla
 
-Nx = 8
-Ny = 8
-Nz = 8
+    def compute_eigenvalues(self):
 
+        lambdas = np.zeros((self.Nx, self.Ny, self.Nz))
 
-x = np.linspace(-size, size, Nx)
-y = np.linspace(-size, size, Ny)
-z = np.linspace(-size, size, Nz)
+        for kx in range(self.Nx):
+            for ky in range(self.Ny):
+                for kz in range(self.Nz):
 
-dx = x[1] - x[0]
-dy = y[1] - y[0]
-dz = z[1] - z[0]
+                    lambda_x = 4.0 / self.dx**2 * np.sin(np.pi * kx / self.Nx)**2
+                    lambda_y = 4.0 / self.dy**2 * np.sin(np.pi * ky / self.Ny)**2
+                    lambda_z = 4.0 / self.dz**2 * np.sin(np.pi * kz / self.Nz)**2
 
-X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
+                    lambdas[kx, ky, kz] = lambda_x + lambda_y + lambda_z
 
-grid_points = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
+        return lambdas
 
-grid_vectors = main.vector_field_tree(scan_points, scan_normals, grid_points, gaussian, 0.1)
+    def apply(self, qc):
 
-divergence = main.calculate_divergence(grid_vectors, Nx, Ny, Nz, dx, dy, dz)
+        lambdas = self.compute_eigenvalues()
 
+        nonzero_eigenvalues = lambdas[lambdas > 1e-12]
+        C = np.min(nonzero_eigenvalues)
 
-f = divergence
+        controls = (
+            self.x_qubits
+            + self.y_qubits
+            + self.z_qubits
+        )
 
-f_vector = f.flatten()
+        for kx in range(self.Nx):
+            for ky in range(self.Ny):
+                for kz in range(self.Nz):
 
-norm = np.linalg.norm(f_vector)
+                    lam = lambdas[kx, ky, kz]
 
-f_state = f_vector / norm
+                    if lam < 1e-12:
+                        continue
 
-nx = int(np.log2(Nx))
-ny = int(np.log2(Ny))
-nz = int(np.log2(Nz))
+                    ratio = C / lam
 
-n_position_qubits = nx + ny + nz
+                    ratio = np.clip(ratio, 0.0, 1.0)
 
-n_qubits = n_position_qubits + 1
+                    theta = 2.0 * np.arcsin(ratio)
 
-ancilla = n_position_qubits
+                    bits = []
 
-x_qubits = list(range(nx))
-y_qubits = list(range(nx, nx + ny))
-z_qubits = list(range(nx + ny, nx + ny + nz))
+                    for bit in range(len(self.x_qubits)):
+                        bits.append((kx >> bit) & 1)
 
-position_qubits = x_qubits + y_qubits + z_qubits
+                    for bit in range(len(self.y_qubits)):
+                        bits.append((ky >> bit) & 1)
 
-qc = QuantumCircuit(n_qubits)
+                    for bit in range(len(self.z_qubits)):
+                        bits.append((kz >> bit) & 1)
 
-qc.initialize(f_state, position_qubits)
+                    for q, bit in zip(controls, bits):
+                        if bit == 0:
+                            qc.x(q)
 
-qc.barrier()
+                    qc.mcry(-theta, controls, self.ancilla, mode="noancilla")
 
-qft_x = QFT(nx)
-qft_y = QFT(ny)
-qft_z = QFT(nz)
+                    for q, bit in zip(controls, bits):
+                        if bit == 0:
+                            qc.x(q)
 
-qc.append(qft_x, x_qubits)
-qc.append(qft_y, y_qubits)
-qc.append(qft_z, z_qubits)
+                    qc.barrier()
 
-qc.barrier()
+        return qc
+    
 
-lambdas = np.zeros((Nx, Ny, Nz))
+def quantum_poisson_solver(divergence, Nx, Ny, Nz, dx, dy, dz):
 
+    div_vector = divergence.flatten()
+    div_state = div_vector / np.linalg.norm(div_vector)
 
-for kx in range(Nx):
-    lambda_x = 4.0 / dx**2 * np.sin(np.pi * kx / Nx)**2
+    nx = int(np.log2(Nx))
+    ny = int(np.log2(Ny))
+    nz = int(np.log2(Nz))
 
-    for ky in range(Ny):
-        lambda_y = 4.0 / dy**2 * np.sin(np.pi * ky / Ny)**2
+    n_position_qubits = nx + ny + nz
+    n_qubits = n_position_qubits + 1
+    ancilla = n_position_qubits
 
-        for kz in range(Nz):
-            lambda_z = 4.0 / dz**2 * np.sin(np.pi * kz / Nz)**2
+    x_qubits = list(range(nx))
+    y_qubits = list(range(nx, nx + ny))
+    z_qubits = list(range(nx + ny, nx + ny + nz))
 
-            lambdas[kx, ky, kz] = lambda_x + lambda_y + lambda_z
+    qc = QuantumCircuit(n_qubits)
 
-nonzero_eigenvalues = lambdas[lambdas > 1e-12]
+    qc.initialize(div_state, range(n_position_qubits))
 
-lambda_min = np.min(nonzero_eigenvalues)
+    qc.barrier()
 
-C = lambda_min
+    qft_x = QFT(nx)
+    qft_y = QFT(ny)
+    qft_z = QFT(nz)
 
-for kx in range(Nx):
-    for ky in range(Ny):
-        for kz in range(Nz):
+    qc.append(qft_x, x_qubits)
+    qc.append(qft_y, y_qubits)
+    qc.append(qft_z, z_qubits)
 
-            lam = lambdas[kx, ky, kz]
+    qc.barrier()
 
-            if lam < 1e-12:
-                continue
+    qf = QuantumFunction(
+        Nx=Nx,
+        Ny=Ny,
+        Nz=Nz,
+        dx=dx,
+        dy=dy,
+        dz=dz,
+        x_qubits=x_qubits,
+        y_qubits=y_qubits,
+        z_qubits=z_qubits,
+        ancilla=ancilla
+    )
 
-            ratio = C / lam
+    qf.apply(qc)
 
-            ratio = min(max(ratio, 0.0), 1.0)
+    iqft_x = QFT(nx, inverse=True)
+    iqft_y = QFT(ny, inverse=True)
+    iqft_z = QFT(nz, inverse=True)
 
-            theta = 2.0 * np.arcsin(ratio)
+    qc.append(iqft_x, x_qubits)
+    qc.append(iqft_y, y_qubits)
+    qc.append(iqft_z, z_qubits)
 
-            bits = []
+    qc.barrier()
 
-            for bit in range(nx):
-                bits.append((kx >> bit) & 1)
+    state = Statevector.from_instruction(qc)
 
-            for bit in range(ny):
-                bits.append((ky >> bit) & 1)
+    amplitudes = state.data
 
-            for bit in range(nz):
-                bits.append((kz >> bit) & 1)
+    solution_amplitudes = np.array([
+        amplitudes[i]
+        for i in range(len(amplitudes))
+        if ((i >> ancilla) & 1) == 1
+    ])
 
-            for q, bit in zip(position_qubits, bits):
-                if bit == 0:
-                    qc.x(q)
+    chi_grid = solution_amplitudes.reshape(Nx, Ny, Nz)
 
+    return chi_grid
 
-            qc.mcry(-theta, position_qubits, ancilla, mode="noancilla")
 
-            for q, bit in zip(position_qubits, bits):
-                if bit == 0:
-                    qc.x(q)
+def quantum_reconstruction(scan_points, scan_normals, size, nx, ny, Smoothing_Kernal, **kwargs):
+    
+    x = np.linspace(-size, size, nx)
+    y = np.linspace(-size, size, ny)
 
+    dx = x[1] - x[0]
+    dy = y[1] - y[0]
 
-qc.barrier()
+    X, Y = np.meshgrid(x, y, indexing="ij")
 
-iqft_x = QFT(nx, inverse=True)
-iqft_y = QFT(ny, inverse=True)
-iqft_z = QFT(nz, inverse=True)
+    grid_points = np.column_stack( (X.ravel(), Y.ravel()) )
 
+    grid_vectors = main.vector_field_tree(scan_points, scan_normals, grid_points, Smoothing_Kernal, **kwargs)
 
-qc.append(iqft_x, x_qubits)
-qc.append(iqft_y, y_qubits)
-qc.append(iqft_z, z_qubits)
+    divergence = main.calculate_divergence(grid_vectors, nx, ny, dx, dy)
 
-qc.barrier()
+    chi = quantum_poisson_solver(divergence, nx, ny, dx, dy)
 
-state = Statevector.from_instruction(qc)
+    chi_grid = chi.reshape(nx, ny)
 
-amplitudes = state.data
+    interpolator = RegularGridInterpolator((x, y), chi_grid)
 
+    chi_samples = interpolator(scan_points)
 
-solution_amplitudes = np.array([
+    iso_value = np.mean(chi_samples)
 
-    amplitudes[i]
-    for i in range(len(amplitudes))
-    if ((i >> ancilla) & 1) == 1
+    return chi_grid, iso_value
 
-])
 
-
-chi_grid = solution_amplitudes.reshape(Nx, Ny, Nz)
-
-
-interpolator = RegularGridInterpolator((x, y, z), chi_grid, bounds_error=False, fill_value=None)
-
-chi_samples = interpolator(scan_points)
-
-iso_value = np.mean(chi_samples)
-
-import matplotlib.pyplot as plt
-from skimage.measure import marching_cubes
-
-verts, faces, normals, values = marching_cubes(
-    chi_grid,
-    level=iso_value,
-    spacing=(x[1] - x[0],
-             y[1] - y[0],
-             z[1] - z[0])
-)
-
-verts[:, 0] += x[0]
-verts[:, 1] += y[0]
-verts[:, 2] += z[0]
-
-fig = plt.figure(figsize=(8, 8))
-ax = fig.add_subplot(111, projection="3d")
-
-ax.plot_trisurf(
-    verts[:, 0],
-    verts[:, 1],
-    faces,
-    verts[:, 2],
-    alpha=0.7,
-    edgecolor="none"
-)
-
-ax.scatter(
-    scan_points[:, 0],
-    scan_points[:, 1],
-    scan_points[:, 2],
-    color="red",
-    s=5
-)
-
-ax.set_xlabel("X")
-ax.set_ylabel("Y")
-ax.set_zlabel("Z")
-
-ax.set_xlim(-size, size)
-ax.set_ylim(-size, size)
-ax.set_zlim(-size, size)
-
-ax.set_box_aspect((1, 1, 1))
-
-plt.show()
 

@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-
 from scipy.interpolate import RegularGridInterpolator
 
 from qiskit import QuantumCircuit
@@ -8,14 +6,85 @@ from qiskit.circuit.library import QFT
 from qiskit.quantum_info import Statevector
 
 import classical_2D as main
-from funcs import geometry as geo
+
+class QuantumFunction:
+
+    def __init__(self, Nx, Ny, dx, dy, x_qubits, y_qubits, ancilla):
+        self.Nx = Nx
+        self.Ny = Ny
+        self.dx = dx
+        self.dy = dy
+        self.x_qubits = x_qubits
+        self.y_qubits = y_qubits
+        self.ancilla = ancilla
+
+    def compute_eigenvalues(self):
+
+        lambdas = np.zeros((self.Nx, self.Ny))
+
+        for kx in range(self.Nx):
+            for ky in range(self.Ny):
+
+                lambda_x = 4.0 / self.dx**2 * np.sin(np.pi * kx / self.Nx)**2
+                lambda_y = 4.0 / self.dy**2 * np.sin(np.pi * ky / self.Ny)**2
+
+                lambdas[kx, ky] = lambda_x + lambda_y
+
+        return lambdas
+
+    def apply(self, qc):
+
+        lambdas = self.compute_eigenvalues()
+
+        nonzero_eigenvalues = lambdas[lambdas > 1e-12]
+        C = np.min(nonzero_eigenvalues)
+
+        for kx in range(self.Nx):
+            for ky in range(self.Ny):
+
+                lam = lambdas[kx, ky]
+
+                if lam < 1e-12:
+                    continue
+
+                ratio = C / lam
+
+                ratio = np.clip(ratio, 0.0, 1.0)
+
+                theta = 2.0 * np.arcsin(ratio)
+
+                bits = []
+
+                for bit in range(len(self.x_qubits)):
+                    bits.append((kx >> bit) & 1)
+
+                for bit in range(len(self.y_qubits)):
+                    bits.append((ky >> bit) & 1)
+
+                controls = self.x_qubits + self.y_qubits
+
+                for q, bit in zip(controls, bits):
+                    if bit == 0:
+                        qc.x(q)
+
+                qc.mcry(-theta, controls, self.ancilla, mode="noancilla")
+
+                for q, bit in zip(controls, bits):
+                    if bit == 0:
+                        qc.x(q)
+                
+                qc.barrier()
+
+        return qc
+
+
+
 
 
 
 def quantum_poisson_solver(divergence, Nx, Ny, dx, dy):
 
     div_vector = divergence.flatten()
-
     div_state = div_vector / np.linalg.norm(div_vector)
 
     nx = int(np.log2(Nx))
@@ -43,63 +112,17 @@ def quantum_poisson_solver(divergence, Nx, Ny, dx, dy):
 
     qc.barrier()
 
-    lambdas = np.zeros((Nx, Ny))
+    qf = QuantumFunction(
+    Nx=Nx,
+    Ny=Ny,
+    dx=dx,
+    dy=dy,
+    x_qubits=x_qubits,
+    y_qubits=y_qubits,
+    ancilla=ancilla
+    )
 
-    for kx in range(Nx):
-
-        for ky in range(Ny):
-
-            lambda_x = (4.0 / dx**2 * np.sin(np.pi * kx / Nx)**2)
-            lambda_y = (4.0 / dy**2 * np.sin(np.pi * ky / Ny)**2)
-
-            lambdas[kx, ky] = (lambda_x + lambda_y)
-
-    nonzero_eigenvalues = lambdas[ lambdas > 1e-12 ]
-
-    lambda_min = np.min(nonzero_eigenvalues)
-
-    C = lambda_min
-
-    for kx in range(Nx):
-
-        for ky in range(Ny):
-
-            lam = lambdas[kx, ky]
-
-            if lam < 1e-12:
-                continue
-
-            ratio = C / lam
-
-            ratio = min(max(ratio, 0.0), 1.0)
-
-            theta = (2.0 * np.arcsin(ratio))
-
-            bits = []
-
-            for bit in range(nx):
-                bits.append((kx >> bit) & 1)
-
-            for bit in range(ny):
-                bits.append((ky >> bit) & 1)
-
-
-            for q, bit in zip(x_qubits + y_qubits, bits):
-
-                if bit == 0:
-                    qc.x(q)
-
-
-            qc.mcry(-theta, x_qubits + y_qubits, ancilla, mode="noancilla")
-
-
-            for q, bit in zip(x_qubits + y_qubits, bits):
-
-                if bit == 0:
-                    qc.x(q)
-
-            qc.barrier()
-
+    qf.apply(qc)
 
     iqft_x = QFT(nx, inverse=True)
     iqft_y = QFT(ny, inverse=True)
@@ -108,9 +131,6 @@ def quantum_poisson_solver(divergence, Nx, Ny, dx, dy):
     qc.append(iqft_y, y_qubits)
 
     qc.barrier()
-
-    # qc.draw("mpl")
-    # plt.show()
 
     state = Statevector.from_instruction(qc)
 
@@ -156,67 +176,4 @@ def quantum_reconstruction(scan_points, scan_normals, size, nx, ny, Smoothing_Ke
 
 
 
-def gaussian(r2, sigma):
-    value = np.exp( -r2 / (2 * sigma**2) )
-    return value
-
-scan_points, scan_normals = geo.generate_circle_points()
-
-Nx = 8
-Ny = 8
-size = 2
-
-chi_grid, iso_value = quantum_reconstruction(scan_points, scan_normals, size, Nx, Ny, gaussian, sigma=0.1)
-
-x = np.linspace(-size, size, Nx)
-y = np.linspace(-size, size, Ny)
-
-dx = x[1] - x[0]
-dy = y[1] - y[0]
-
-X, Y = np.meshgrid(x, y, indexing="ij")
-
-plt.figure(figsize=(7, 7))
-
-plt.contour(
-    X,
-    Y,
-    chi_grid,
-    levels=[iso_value],
-    colors="blue"
-)
-
-plt.contourf(X, Y, chi_grid, cmap="coolwarm", levels=20)
-plt.contour(X, Y, chi_grid)
-
-plt.axis("equal")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("Heatmap of the Indicator Function")
-
-plt.show()
-
-fig, ax = plt.subplots(figsize=(7, 7))
-
-contour = ax.contour(
-    X,
-    Y,
-    chi_grid,
-    levels=[iso_value]
-)
-
-ax.scatter(
-    scan_points[:, 0],
-    scan_points[:, 1],
-    color="red",
-    s=1,
-    zorder=1
-)
-
-plt.axis("equal")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("Reconstruced Surface")
-
-plt.show()
 
