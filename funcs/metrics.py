@@ -96,5 +96,22 @@ def square_vs_isosurface_iou(chi_grid, iso_value, x, y, square_size=1):
     return intersection_area / union_area
 
 
-def pentagon():
-    print()
+def pentagon_vs_isosurface_iou(chi_grid, iso_value, x, y, size=1.0):
+    
+    angles = np.linspace(np.pi / 2, np.pi / 2 + 2 * np.pi, 6)[:-1]
+
+    vertices = size * np.column_stack((np.cos(angles), np.sin(angles)))
+
+    pentagon = Polygon(vertices)
+
+    polygons = iso_contour_to_polygons(chi_grid, iso_value, x, y)
+
+    iso_shape = unary_union(polygons)
+
+    intersection_area = pentagon.intersection(iso_shape).area
+    union_area = pentagon.union(iso_shape).area
+
+    if union_area == 0:
+        return 0.0
+
+    return intersection_area / union_area
