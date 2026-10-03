@@ -1,328 +1,142 @@
 # Quantum Poisson Surface Reconstruction
 
-# Quantum Poisson Surface Reconstruction
+A computational study of **Poisson Surface Reconstruction (PSR)** in 2D and 3D, combining classical numerical methods with quantum approaches to the underlying Poisson solver.
 
-A computational study of **Poisson Surface Reconstruction (PSR)** in 2D and 3D, together with quantum formulations of the underlying **Poisson linear-system solver** and sensitivity analysis across different geometries.
-
-The project investigates how classical and quantum approaches to solving the Poisson equation can be applied to surface reconstruction problems, and how reconstruction quality and solver behaviour change under different geometric configurations.
+The project investigates the complete reconstruction pipeline, from oriented point samples and vector-field construction through to Poisson solving and surface extraction. The quantum component focuses on replacing the classical Poisson linear-system solver with a quantum formulation, followed by sensitivity analysis across different geometries.
 
 ---
 
 ## Overview
 
-Poisson Surface Reconstruction is a widely used technique for reconstructing an implicit surface from oriented point samples. At its core, the reconstruction problem can be formulated as a **Poisson equation**, which is discretised into a linear system.
+Poisson Surface Reconstruction converts a set of oriented points into an implicit representation of a surface.
 
-This project explores the problem at three levels:
-
-* **Classical Poisson Surface Reconstruction**
-
-  * 2D reconstruction
-  * 3D reconstruction
-  * Numerical solution of the resulting Poisson system
-
-* **Quantum Poisson Solving**
-
-  * Quantum formulations of the Poisson linear-system solving component
-  * Application to both 2D and 3D reconstruction problems
-  * Comparison with the corresponding classical approach
-
-* **Sensitivity Analysis**
-
-  * Experiments across multiple geometries
-  * Investigation of reconstruction accuracy and solver behaviour
-  * Analysis of how changes in geometry and problem parameters affect the solution
-
-The overall workflow is:
-
-```text
-Point / Geometric Data
-        │
-        ▼
-Surface / Vector Field Representation
-        │
-        ▼
-Poisson Equation
-        │
-        ▼
-Discretisation
-        │
-        ▼
-Linear System
-   ┌────┴────┐
-   │         │
-   ▼         ▼
-Classical   Quantum
- Solver      Solver
-   │         │
-   └────┬────┘
-        ▼
-Reconstructed Surface
-        │
-        ▼
-Sensitivity Analysis
-```
-
----
-
-## Objectives
-
-The main objectives of the project are:
-
-1. Implement Poisson-based surface reconstruction in **2D and 3D**.
-2. Formulate the resulting Poisson problem as a linear system.
-3. Investigate a **quantum approach to solving the Poisson linear system**.
-4. Compare classical and quantum solution approaches.
-5. Study the sensitivity of the reconstruction to different geometries and numerical parameters.
-6. Investigate the practical challenges involved in applying quantum linear-system methods to computational geometry problems.
-
----
-
-# 1. Poisson Surface Reconstruction
-
-## 1.1 Mathematical formulation
-
-Poisson surface reconstruction can be expressed through the relationship
+Given scan points \(p_i\) and corresponding normals \(n_i\), the method first constructs a vector field over a regular grid. The divergence of this field is then used as the source term of a Poisson equation:
 
 $$
-\nabla \cdot \nabla \chi = \nabla \cdot V,
-$$
-
-or equivalently,
-
-$$
-\Delta \chi = \nabla \cdot V,
+\Delta \chi = \nabla \cdot V
 $$
 
 where:
 
-* \(\chi\) is the implicit indicator function representing the reconstructed surface,
-* \(V\) is a vector field constructed from the oriented input data,
+* \(V\) is the vector field constructed from the input normals,
+* \(\chi\) is the implicit indicator function,
 * \(\Delta\) is the Laplacian operator.
 
-The resulting Poisson equation is discretised to obtain a linear system of the form
+After discretisation, the Poisson problem can be expressed as a linear system,
 
 $$
-A x = b.
+A\chi=b.
 $$
 
-Solving this system provides the information required to recover the reconstructed surface.
+This project investigates both classical and quantum approaches to solving this problem.
 
 ---
 
-# 2. 2D Reconstruction
+## Reconstruction Pipeline
 
-The first part of the project considers the Poisson reconstruction problem in **two dimensions**.
-
-The 2D implementation provides a controlled environment for studying:
-
-* discretisation of the Poisson equation,
-* construction of the linear system,
-* reconstruction accuracy,
-* numerical stability,
-* and the behaviour of the corresponding quantum solver.
-
-Different geometries are used to investigate how the reconstruction responds to changes in the input geometry.
-
-### Example geometries
-
-The experiments include multiple geometric configurations to test the solver under different conditions.
-
-Typical analysis includes:
-
-* reconstructed geometry,
-* reconstruction error,
-* solution behaviour,
-* sensitivity to perturbations,
-* and comparison between classical and quantum approaches.
-
----
-
-# 3. 3D Reconstruction
-
-The project extends the same methodology to **three-dimensional surface reconstruction**.
-
-The 3D problem introduces additional computational and numerical considerations because the discretised Poisson system becomes significantly larger.
-
-The 3D pipeline can be summarised as:
+The classical reconstruction algorithm follows the pipeline:
 
 ```text
-3D Point Cloud
-      │
-      ▼
-Oriented Normals
-      │
-      ▼
-Vector Field
-      │
-      ▼
+Oriented Scan Points
+        │
+        ▼
+Vector Field Construction
+        │
+        │  Smoothing Kernel
+        ▼
+Regular Grid Vector Field V
+        │
+        ▼
+Divergence ∇ · V
+        │
+        ▼
 Poisson Equation
-      │
-      ▼
-Discretised Linear System
-      │
-      ▼
-       Ax = b
-      │
-   ┌──┴──┐
-   ▼     ▼
-Classical Quantum
-Solver    Solver
-   │       │
-   └───┬───┘
-       ▼
+        │
+        ▼
+      Δχ = ∇ · V
+        │
+        ▼
+Poisson Solver
+        │
+   ┌────┴─────┐
+   │          │
+Classical   Quantum
+   │          │
+   └────┬─────┘
+        ▼
+Implicit Function χ
+        │
+        ▼
+Interpolation at Scan Points
+        │
+        ▼
+Isovalue Estimation
+        │
+        ▼
 Reconstructed Surface
 ```
 
-The 3D experiments are particularly useful for examining how the methods behave as the dimensionality and size of the underlying problem increase.
-
 ---
 
-# 4. Quantum Poisson Solver
+# Sensitivity Analysis
 
-A central component of the project is the development of a **quantum formulation of the Poisson solver**.
+A significant part of the project is the sensitivity analysis performed across different geometries.
 
-After discretisation, the Poisson equation takes the form
+Rather than evaluating the method on a single surface, multiple geometries are considered to investigate how the reconstruction and Poisson solver respond to changes in the underlying problem.
 
-$$
-Ax=b.
-$$
+The analysis examines factors such as:
 
-This is a linear-system problem, making it relevant to quantum algorithms for linear algebra.
-
-The quantum component therefore focuses primarily on the **Poisson solver itself**, rather than attempting to replace the entire surface-reconstruction pipeline with a quantum algorithm.
-
-The general quantum workflow is:
-
-```text
-Poisson Problem
-      │
-      ▼
-Discretisation
-      │
-      ▼
-     Ax = b
-      │
-      ▼
-Quantum Linear-System Formulation
-      │
-      ▼
-Quantum State / Solution
-      │
-      ▼
-Extract Relevant Quantities
-      │
-      ▼
-Surface Reconstruction
-```
-
-The project investigates how the quantum formulation behaves for both the 2D and 3D Poisson problems.
-
----
-
-# 5. Classical vs Quantum Approach
-
-An important aspect of the project is distinguishing between the mathematical formulation of the problem and the method used to solve the resulting linear system.
-
-| Component            | Classical Approach         | Quantum Approach                   |
-| -------------------- | -------------------------- | ---------------------------------- |
-| Geometry             | Classical                  | Classical                          |
-| Poisson formulation  | Classical                  | Classical                          |
-| Discretisation       | Classical                  | Classical                          |
-| Linear system        | \(Ax=b\)                   | \(Ax=b\)                           |
-| Linear-system solver | Classical numerical method | Quantum linear-system method       |
-| Reconstruction       | Classical post-processing  | Quantum solution + post-processing |
-| Sensitivity analysis | ✓                          | ✓                                  |
-
-This makes it possible to investigate the potential role of quantum linear-system algorithms within an otherwise classical computational-geometry pipeline.
-
----
-
-# 6. Sensitivity Analysis
-
-A major component of the project is the **sensitivity analysis** performed across different geometries.
-
-The purpose of this analysis is to determine how changes in the underlying problem affect the reconstructed solution.
-
-The experiments consider different geometric configurations and examine quantities such as:
-
-* reconstruction accuracy,
-* numerical error,
-* stability,
-* changes in the Poisson system,
-* solver behaviour,
+* geometry,
+* grid resolution,
+* smoothing kernals,
+* discretisation,
+* Poisson-system properties,
+* reconstruction error,
 * and differences between classical and quantum solutions.
 
-Conceptually:
+The general experimental workflow is:
 
 $$
 \text{Geometry}
 \rightarrow
-\text{Poisson System}
+\text{Vector Field}
+\rightarrow
+\text{Divergence}
+\rightarrow
+A\chi=b
 \rightarrow
 \text{Solver}
 \rightarrow
 \text{Reconstruction}
 \rightarrow
-\text{Error}
+\text{Error Analysis}.
 $$
 
-By varying the geometry and relevant parameters, the project examines the sensitivity of each stage of this pipeline.
+This allows the behaviour of the reconstruction to be studied systematically rather than relying on a single example.
 
 ---
 
-# 7. Experimental Geometries
+# Experiments
 
-The sensitivity experiments are performed across multiple geometries in both 2D and 3D.
+The experiments are organised around three main questions:
 
-This allows the project to investigate whether solver behaviour is consistent across different types of surfaces rather than being specific to a single example.
+### 1. Reconstruction
 
-For each geometry, the analysis can include:
+Can the Poisson formulation accurately reconstruct different 2D and 3D geometries?
 
-### Input
+### 2. Quantum solution
 
-* Point locations
-* Surface geometry
-* Orientation / normal information
-* Discretisation parameters
+How does a quantum approach to the Poisson linear system compare with the classical solution?
 
-### Solver
+### 3. Sensitivity
 
-* Poisson matrix \(A\)
-* Right-hand side \(b\)
-* Condition / numerical properties of the system
-* Classical solution
-* Quantum solution
+How does the reconstruction change as the geometry, discretisation, or other numerical parameters are varied?
 
-### Output
-
-* Reconstructed geometry
-* Reconstruction error
-* Difference between classical and quantum solutions
-* Sensitivity to perturbations
+Results include reconstructed geometries, error measurements, solver comparisons, and sensitivity plots.
 
 ---
 
-# 8. Results and Analysis
-
-The results are organised around three main questions:
-
-### 1. Can the Poisson reconstruction problem be formulated consistently in 2D and 3D?
-
-The classical implementations provide the baseline against which the quantum approach can be evaluated.
-
-### 2. Can the Poisson linear system be treated using a quantum linear-system approach?
-
-The quantum implementation investigates the practical steps required to encode and solve the discretised system using quantum methods.
-
-### 3. How sensitive is the reconstruction to the underlying geometry and numerical parameters?
-
-The sensitivity analysis provides insight into the robustness of both approaches and highlights how the structure of the geometry influences the resulting Poisson system.
-
----
-
-# 9. Project Structure
-
-The repository is organised approximately as follows:
+# Project Structure
 
 ```text
 .
@@ -339,14 +153,14 @@ The repository is organised approximately as follows:
 ├── data/
 │   └── geometries/
 │
-├── results/
-│   ├── figures/
-│   ├── reconstructions/
-│   └── analysis/
-│
 ├── notebooks/
 │   ├── 2D/
 │   └── 3D/
+│
+├── results/
+│   ├── figures/
+│   ├── reconstructions/
+│   └── sensitivity/
 │
 ├── src/
 │   ├── poisson/
@@ -357,135 +171,80 @@ The repository is organised approximately as follows:
 └── README.md
 ```
 
-*The exact structure may differ depending on the implementation.*
-
 ---
 
-# 10. Technologies
+# Packages
 
-The project uses computational and quantum-computing tools for numerical experimentation.
-
-Potential components include:
+The project uses:
 
 * **Python**
 * **NumPy**
 * **SciPy**
 * **Matplotlib**
-* **[Quantum computing framework used in the project]**
-* Numerical linear algebra
-* Computational geometry
-* Partial differential equations
+* **Qiskit**
+* **Qiskit Aer**
 
 ---
 
-# 11. Key Concepts
+# Key Contributions
 
-This project brings together several areas of computational science:
+The project combines several areas of computational science:
 
-### Computational Geometry
+* **Poisson Surface Reconstruction**
+* **Numerical PDEs**
+* **Fourier-based Poisson solving**
+* **Numerical linear algebra**
+* **Quantum linear-system algorithms**
+* **Computational geometry**
+* **Sensitivity and error analysis**
 
-Representation and reconstruction of geometric surfaces from sampled data.
-
-### Partial Differential Equations
-
-The reconstruction problem is formulated using the Poisson equation,
-
-$$
-\Delta \chi = \nabla \cdot V.
-$$
-
-### Numerical Linear Algebra
-
-Discretisation produces a linear system,
-
-$$
-Ax=b,
-$$
-
-which must be solved accurately and efficiently.
-
-### Quantum Computing
-
-Quantum linear-system methods are investigated as an alternative approach to solving the Poisson system.
-
-### Numerical Sensitivity
-
-The behaviour of the reconstruction is studied under changes to geometry and numerical parameters.
+The main contribution is an experimental framework for investigating how a quantum Poisson solver can be incorporated into a surface-reconstruction pipeline and how its behaviour changes across different geometries and problem configurations.
 
 ---
 
-# 12. Limitations
+# Limitations and Future Work
 
-The quantum results should be interpreted in the context of the implementation and simulation environment.
+The current implementation provides a framework for investigating quantum Poisson solving, but several challenges remain before such an approach could provide practical advantages over established classical methods.
 
-In particular, a quantum formulation of the linear-system solver does not automatically imply an end-to-end quantum speedup for Poisson surface reconstruction.
+Potential extensions include:
 
-Practical considerations include:
-
-* state preparation,
-* encoding the matrix and right-hand side,
-* quantum circuit depth,
-* measurement and readout,
-* noise in hardware implementations,
-* classical preprocessing,
-* and the cost of extracting useful information from the quantum state.
-
-Therefore, the project focuses on **investigating the quantum formulation and its behaviour**, rather than assuming a practical computational advantage over classical Poisson solvers.
+* a quantum algorithm for screened PSR,
+* a quantum algorithm for a octree-based PSR algorithm,
+* noise and error mitigation,
+* alternative quantum linear-system algorithms like a polynomial approximation algorithm,
+* more extensive geometric datasets,
+* and end-to-end resource comparisons between classical and quantum approaches.
 
 ---
 
-# 13. Future Work
+# Summary
 
-Possible extensions include:
+This project investigates **Poisson Surface Reconstruction through both classical and quantum approaches**.
 
-* Scaling the experiments to larger 3D point clouds.
-* Investigating sparse quantum linear-system methods.
-* Testing the algorithms on actual quantum hardware.
-* Studying the effects of noise and error mitigation.
-* Improving state-preparation methods.
-* Comparing different quantum linear-system algorithms.
-* Investigating preconditioning strategies.
-* Measuring the effect of matrix condition number on quantum solver performance.
-* Exploring end-to-end quantum surface reconstruction.
-* Extending the sensitivity analysis to noisy and incomplete point clouds.
+Starting from oriented point samples, the method constructs a smoothed vector field, calculates its divergence, solves the resulting Poisson equation, and extracts an implicit surface.
 
----
+The classical solver uses a **Fourier-domain solution of the Poisson equation**, while the quantum implementation investigates a quantum approach to the underlying linear-system problem.
 
-# 14. Summary
+The methodology is evaluated in both **2D and 3D**, with sensitivity analysis across multiple geometries to study reconstruction accuracy and solver behaviour.
 
-This project investigates the intersection of **Poisson surface reconstruction and quantum computing**.
-
-The work progresses from classical numerical reconstruction in **2D and 3D**, to quantum formulations of the underlying **Poisson linear-system solver**, followed by a systematic **sensitivity analysis across different geometries**.
-
-The central computational problem is:
+The project therefore sits at the intersection of:
 
 $$
-\boxed{Ax=b}
+\boxed{
+\text{Computational Geometry}
++
+\text{PDEs}
++
+\text{Numerical Linear Algebra}
++
+\text{Quantum Computing}
+}
 $$
-
-where the matrix \(A\) originates from the discretised Poisson equation.
-
-By studying both classical and quantum approaches to this system, the project provides a framework for examining where quantum linear-algebra techniques may fit within computational geometry and PDE-based reconstruction workflows.
 
 ---
 
 ## Author
 
-**[Your Name]**
+**Avinash Pothuri**
 
-[GitHub Profile](https://github.com/[username])
-
----
-
-## Citation
-
-If you use this project or its results, please cite:
-
-```bibtex
-@misc{poisson_quantum_reconstruction,
-  author = {[Your Name]},
-  title  = {Quantum Poisson Surface Reconstruction},
-  year   = {2026},
-  url    = {https://github.com/[username]/[repository]}
-}
-```
+I would like to thank Dr Eky Febrianto for supervising me through this project
