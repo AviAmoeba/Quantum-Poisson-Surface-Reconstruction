@@ -4,8 +4,6 @@ A computational study of **Poisson Surface Reconstruction (PSR)** in 2D and 3D, 
 
 The project investigates the complete reconstruction pipeline, from oriented point samples and vector-field construction through to Poisson solving and surface extraction. The quantum component focuses on replacing the classical Poisson linear-system solver with a quantum formulation, followed by sensitivity analysis across different geometries.
 
----
-
 ## Overview
 
 Poisson Surface Reconstruction converts a set of oriented points into an implicit representation of a surface.
@@ -29,8 +27,6 @@ A\chi=b.
 $$
 
 This project investigates both classical and quantum approaches to solving this problem.
-
----
 
 ## Reconstruction Pipeline
 
@@ -76,8 +72,6 @@ Isovalue Estimation
 Reconstructed Surface
 ```
 
----
-
 # Sensitivity Analysis
 
 A significant part of the project is the sensitivity analysis performed across different geometries.
@@ -114,8 +108,6 @@ $$
 
 This allows the behaviour of the reconstruction to be studied systematically rather than relying on a single example.
 
----
-
 # Experiments
 
 The experiments are organised around three main questions:
@@ -133,8 +125,6 @@ How does a quantum approach to the Poisson linear system compare with the classi
 How does the reconstruction change as the geometry, discretisation, or other numerical parameters are varied?
 
 Results include reconstructed geometries, error measurements, solver comparisons, and sensitivity plots.
-
----
 
 # Project Structure
 
@@ -171,8 +161,6 @@ Results include reconstructed geometries, error measurements, solver comparisons
 └── README.md
 ```
 
----
-
 # Packages
 
 The project uses:
@@ -183,8 +171,6 @@ The project uses:
 * **Matplotlib**
 * **Qiskit**
 * **Qiskit Aer**
-
----
 
 # Key Contributions
 
@@ -200,8 +186,6 @@ The project combines several areas of computational science:
 
 The main contribution is an experimental framework for investigating how a quantum Poisson solver can be incorporated into a surface-reconstruction pipeline and how its behaviour changes across different geometries and problem configurations.
 
----
-
 # Limitations and Future Work
 
 The current implementation provides a framework for investigating quantum Poisson solving, but several challenges remain before such an approach could provide practical advantages over established classical methods.
@@ -214,8 +198,6 @@ Potential extensions include:
 * alternative quantum linear-system algorithms like a polynomial approximation algorithm,
 * more extensive geometric datasets,
 * and end-to-end resource comparisons between classical and quantum approaches.
-
----
 
 # Summary
 
@@ -240,8 +222,6 @@ $$
 \text{Quantum Computing}
 }
 $$
-
----
 
 ## Author
 
